@@ -1,5 +1,7 @@
 import os
 import glob
+import yaml
+import shutil
 
 from cffi import FFI
 
@@ -78,20 +80,18 @@ void ssht_core_gl_inverse_sov(double _Complex *f, const double _Complex *flm,
 
 ffi.cdef(cdef_str)
 
-ssht_root = '/users/zmartino/zmartino/projects/ssht_numba/ssht'
+with open('sources_config.yaml', 'r') as stream:
+    source_locations = yaml.safe_load(stream)
 
-# include_dirs = [ssht_root + '/include', ssht_root + '/include/c']
+ssht_root = source_locations['ssht_root']
+fftw_root = source_locations['fftw_root']
+
 include_dirs = [
-    ssht_root + '/fftw/include',
     ssht_root + '/src/c',
 ]
 
-library_dirs = [
-    ssht_root + '/fftw/lib'
-]
-
 extra_link_args=[
-    "-L/users/zmartino/zmartino/projects/ssht_numba/ssht/fftw"
+    "-L" + fftw_root
 ]
 
 # the compiler options from the ssht makefile
@@ -129,3 +129,15 @@ ffi.set_source("_ssht_cffi",
 
 if __name__ == '__main__':
     ffi.compile(verbose=True)
+
+    files_to_delete = ['_ssht_cffi.o', '_ssht_cffi.c']
+    build_directory = ssht_root.split('/')[1]
+
+    cwd = os.getcwd()
+
+    for file in files_to_delete:
+        # print os.path.join(cwd, file)
+        os.remove(os.path.join(cwd, file))
+
+    # print os.path.join(cwd, build_directory)
+    shutil.rmtree(os.path.join(cwd, build_directory))

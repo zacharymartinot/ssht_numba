@@ -114,3 +114,5 @@ rec_f_re_nb_mwss = np.empty(sshtn.mwss_sample_shape(L), dtype=np.float64)
 sshtn.mw_inverse_sov_sym_ss_real(flm_nb_re_mwss, L, rec_f_re_nb_mwss)
 
 assert np.allclose(rec_f_re_py_mwss, rec_f_re_nb_mwss) == True
+
+print "Tests passed."

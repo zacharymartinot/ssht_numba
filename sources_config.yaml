@@ -1,0 +1,5 @@
+#YAML
+
+ssht_root: '/users/zmartino/zmartino/lib/ssht'
+
+fftw_root: '/users/zmartino/zmartino/lib/ssht/fftw'
