@@ -1,0 +1,5 @@
+*.pyc
+/users
+*.o
+*.c
+*.so
