@@ -1,5 +1,5 @@
 #YAML
 
-ssht_root: '/users/zmartino/zmartino/lib/ssht'
+ssht_path: '/users/zmartino/zmartino/lib/ssht'
 
-fftw_root: '/users/zmartino/zmartino/lib/ssht/fftw'
+fftw_path: '/users/zmartino/zmartino/lib/ssht/fftw'

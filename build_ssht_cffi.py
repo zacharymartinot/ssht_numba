@@ -83,15 +83,15 @@ ffi.cdef(cdef_str)
 with open('sources_config.yaml', 'r') as stream:
     source_locations = yaml.safe_load(stream)
 
-ssht_root = source_locations['ssht_root']
-fftw_root = source_locations['fftw_root']
+ssht_path = source_locations['ssht_path']
+fftw_path = source_locations['fftw_path']
 
 include_dirs = [
-    ssht_root + '/src/c',
+    ssht_path + '/src/c',
 ]
 
 extra_link_args=[
-    "-L" + fftw_root
+    "-L" + fftw_path
 ]
 
 # the compiler options from the ssht makefile
@@ -110,7 +110,7 @@ extra_compile_args = [
 # for cffi and produces an error
 
 # the ssht_about.c path is the first element of the sorted list
-ssht_src = sorted(glob.glob(os.path.join(ssht_root, 'src', 'c', '*.c')))[1:]
+ssht_src = sorted(glob.glob(os.path.join(ssht_path, 'src', 'c', '*.c')))[1:]
 
 ffi.set_source("_ssht_cffi",
 """
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     ffi.compile(verbose=True)
 
     files_to_delete = ['_ssht_cffi.o', '_ssht_cffi.c']
-    build_directory = ssht_root.split('/')[1]
+    build_directory = ssht_path.split('/')[1]
 
     cwd = os.getcwd()
 
