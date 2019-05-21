@@ -128,20 +128,19 @@ ffi.set_source("_ssht_cffi",
     extra_compile_args=extra_compile_args)
 
 def build():
-
-    cwd = os.getcwd()
-
-    ffi.compile(os.path.join(cwd, 'ssht_numba'), verbose=True)
+    ffi.compile(verbose=True)
 
     files_to_delete = ['_ssht_cffi.o', '_ssht_cffi.c']
     build_directory = ssht_path.split('/')[1]
 
+    cwd = os.getcwd()
+
     for file in files_to_delete:
         # print os.path.join(cwd, file)
-        os.remove(os.path.join(cwd,'ssht_numba', file))
+        os.remove(os.path.join(cwd, file))
 
     # print os.path.join(cwd, build_directory)
-    shutil.rmtree(os.path.join(cwd, 'ssht_numba', build_directory))
+    shutil.rmtree(os.path.join(cwd, build_directory))
 
 if __name__ == '__main__':
     build()

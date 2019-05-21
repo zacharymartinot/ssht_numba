@@ -15,10 +15,11 @@ Python:
 
 ## Installation
 
-FFTW must be compiled seperately, but only the SSHT source files are required.
+FFTW must be compiled separately, but only the SSHT source files are required.
 
 In the `sources_config.yaml` file,
 - add the path to the SSHT top level directory as `ssht_path`
-- add the path to the FFTW top level directory as `fftw_path`
+- add the path to the directory containing the FFTW library as `fftw_path`
 
-Then run `python build_ssht_cffi.py`, which will produce a `_ssht_cffi.so` file.
+The package can then be installed with `pip install .`. During setup the
+extension module `ssht_numba/_ssht_cffi.so` will be built from SSHT source.

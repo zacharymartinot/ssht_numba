@@ -1,5 +1,5 @@
 *.pyc
-/users
 *.o
 *.c
 *.so
+/*.egg-info
