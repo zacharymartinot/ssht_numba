@@ -42,7 +42,6 @@ Versioning
 This package uses `pyscaffold`, which in turn uses `setuptools_scm`, and manages
 versioning via Git tags. Versioning should use https://semver.org semantic versioning
 rules.
->>>>>>> Stashed changes
 
 Note
 ====
