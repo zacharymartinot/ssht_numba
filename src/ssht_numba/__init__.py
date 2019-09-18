@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pkg_resources import DistributionNotFound, get_distribution
 
-from .numba_wrappers import dl_m, ssht_numba_series_eval
+from .numba_wrappers import dl_m, generate_dl, ssht_numba_series_eval
 
 try:
     # Change here if project is renamed and does not equal the package name
