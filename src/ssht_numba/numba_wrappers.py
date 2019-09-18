@@ -37,6 +37,7 @@ __all__ = [
     "mw_sample_positions",
     "mwss_sample_positions",
     "bad_meshgrid",
+    "generate_dl",
 ]
 
 # assign references outside of the njit function, apparently can't use
@@ -287,3 +288,55 @@ def ssht_numba_series_eval(f_lm, s, L, delta, theta, phi):
             f[i] += np.sum(sY_elm * f_lm[j0 : j1 + 1])
 
     return f
+
+
+ssht_dl_beta_risbo_half_table = _ssht_cffi.lib.ssht_dl_beta_risbo_half_table
+
+
+@nb.njit
+def generate_dl(beta: float, L: int):
+
+    dl_array = np.zeros((L, 2 * L - 1, 2 * L - 1))
+    dl_dummy = np.zeros((2 * L - 1, 2 * L - 1))
+
+    sqrt_tbl = np.sqrt(np.arange(0, 2 * (L - 1) + 1))
+    signs = np.ones((L + 1, 1))
+
+    offset_m = L - 1
+
+    for i in range(1, L + 1, 2):
+        signs[i] = -1
+
+        dl_size = 2
+
+        # do recursion
+        # el = 0 first
+        ssht_dl_beta_risbo_half_table(
+            ffi.from_buffer(dl_dummy),
+            beta,
+            L,
+            dl_size,
+            0,
+            ffi.from_buffer(sqrt_tbl),
+            ffi.from_buffer(signs),
+        )
+
+        dl_array[0, offset_m, offset_m] = dl_dummy[offset_m, offset_m]
+
+        for el in range(1, L):
+            ssht_dl_beta_risbo_half_table(
+                ffi.from_buffer(dl_dummy),
+                beta,
+                L,
+                dl_size,
+                el,
+                ffi.from_buffer(sqrt_tbl),
+                ffi.from_buffer(signs),
+            )
+            for i in range(-el, el + 1):
+                for j in range(-el, el + 1):
+                    dl_array[el, offset_m + i, offset_m + j] = dl_dummy[
+                        offset_m + i, offset_m + j
+                    ]
+
+    return dl_array

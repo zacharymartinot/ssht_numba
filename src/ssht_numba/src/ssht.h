@@ -66,3 +66,8 @@ void ssht_core_gl_forward_sov(double _Complex *flm, const double _Complex *f,
 
 void ssht_core_gl_inverse_sov(double _Complex *f, const double _Complex *flm,
                           int L, int spin, int verbosity);
+
+void ssht_dl_beta_risbo_half_table(double *dl, double beta, int L,
+					 				   ssht_dl_size_t dl_size,
+					 				   int el, double *sqrt_tbl,
+					 				   double *signs);

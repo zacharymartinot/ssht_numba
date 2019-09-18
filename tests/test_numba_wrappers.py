@@ -123,3 +123,7 @@ def test_everything():
     sshtn.mw_inverse_sov_sym_ss_real(flm_nb_re_mwss, L, rec_f_re_nb_mwss)
 
     assert np.allclose(rec_f_re_py_mwss, rec_f_re_nb_mwss)
+
+    assert np.allclose(
+        pyssht.generate_dl(np.pi / 2, 10), sshtn.generate_dl(np.pi / 2, 10)
+    )
