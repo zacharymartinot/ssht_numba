@@ -25,6 +25,13 @@ Other dependencies of ssht_numba are installed automatically. However, if you ar
 `conda` and would like these packages to be installed with `conda` rather than `pip`,
 you may want to do `conda install numpy numba cffi` prior to installing the package.
 
+To install a development environment (with all required packages for testing,
+creating documentation and linting), install with ``pip install -e .[dev]``, or if you
+would just like to run tests, use ``pip install -e .[testing]``. At this time, an extra
+package is also required for testing: `pyssht`, which at this time must be installed
+by downloading https://github.com/UPennEoR/ssht and doing ``python setup.py install``
+(*not* ``pip``).
+
 Quick Usage
 ===========
 
