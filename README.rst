@@ -17,9 +17,9 @@ using the option ``--enable-shared``.
 
 Then, installation should be as simple as::
 
-  pip install . from the top-level directory,
+  pip install .
 
-or::
+from the top-level directory, or::
 
   pip install git+git://github.com/UPennEoR/ssht_numba
 
