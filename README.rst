@@ -16,7 +16,12 @@ to install the *shared library*. If compiling yourself, that means using the opt
 `--enable-shared`.
 
 Then, installation should be as simple as `pip install .` from the top-level directory,
-or `pip install git+git://github.com/UPennEoR/ssht_numba`. If you installed `FFTW` to a
+or `pip install git+git://github.com/UPennEoR/ssht_numba`.
+If you clone this repo to install manually, you must also grab the submodules with::
+
+    git submodule update --init --recursive
+
+If you installed `FFTW` to a
 non-default location, then you can point to its location using the environment variable
 `FFTW_PATH`, which should be the path to the `lib` folder, eg.:
 `FFTW_PATH=/usr/lib pip install .`.
