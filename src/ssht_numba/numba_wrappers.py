@@ -2,6 +2,7 @@
 
 The function signatures are defined in the SSHT docs.
 """
+import warnings
 
 import cffi
 import numba as nb
@@ -46,7 +47,6 @@ ssht_core_mw_forward_sov_conv_sym = _ssht_cffi.lib.ssht_core_mw_forward_sov_conv
 
 @nb.njit
 def mw_forward_sov_conv_sym(f, L, s, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -58,7 +58,6 @@ ssht_core_mw_inverse_sov_sym = _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym
 
 @nb.njit
 def mw_inverse_sov_sym(flm, L, s, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -72,7 +71,6 @@ ssht_core_mw_forward_sov_conv_sym_real = (
 
 @nb.njit
 def mw_forward_sov_conv_sym_real(f, L, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -84,7 +82,6 @@ ssht_core_mw_inverse_sov_sym_real = _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym_
 
 @nb.njit
 def mw_inverse_sov_sym_real(flm, L, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -98,7 +95,6 @@ ssht_core_mw_forward_sov_conv_sym_ss = (
 
 @nb.njit
 def mw_forward_sov_conv_sym_ss(f, L, s, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -110,7 +106,6 @@ ssht_core_mw_inverse_sov_sym_ss = _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym_ss
 
 @nb.njit
 def mw_inverse_sov_sym_ss(flm, L, s, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -124,7 +119,6 @@ ssht_core_mw_forward_sov_conv_sym_ss_real = (
 
 @nb.njit
 def mw_forward_sov_conv_sym_ss_real(f, L, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -138,7 +132,6 @@ ssht_core_mw_inverse_sov_sym_ss_real = (
 
 @nb.njit
 def mw_inverse_sov_sym_ss_real(flm, L, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -287,3 +280,193 @@ def ssht_numba_series_eval(f_lm, s, L, delta, theta, phi):
             f[i] += np.sum(sY_elm * f_lm[j0 : j1 + 1])
 
     return f
+
+
+ssht_dl_beta_risbo_half_table = _ssht_cffi.lib.ssht_dl_beta_risbo_half_table
+
+
+@nb.njit
+def generate_dl(beta: float, L: int):
+    dl_array = np.zeros((L, 2 * L - 1, 2 * L - 1))
+    dl_dummy = np.zeros((2 * L - 1, 2 * L - 1))
+
+    sqrt_tbl = np.sqrt(np.arange(0, 2 * (L - 1) + 1))
+    signs = np.ones((L + 1, 1))
+
+    offset_m = L - 1
+
+    for i in range(1, L + 1, 2):
+        signs[i] = -1
+
+        dl_size = 2
+
+        # do recursion
+        # el = 0 first
+        ssht_dl_beta_risbo_half_table(
+            ffi.from_buffer(dl_dummy),
+            beta,
+            L,
+            dl_size,
+            0,
+            ffi.from_buffer(sqrt_tbl),
+            ffi.from_buffer(signs),
+        )
+
+        dl_array[0, offset_m, offset_m] = dl_dummy[offset_m, offset_m]
+
+        for el in range(1, L):
+            ssht_dl_beta_risbo_half_table(
+                ffi.from_buffer(dl_dummy),
+                beta,
+                L,
+                dl_size,
+                el,
+                ffi.from_buffer(sqrt_tbl),
+                ffi.from_buffer(signs),
+            )
+            for i in range(-el, el + 1):
+                for j in range(-el, el + 1):
+                    dl_array[el, offset_m + i, offset_m + j] = dl_dummy[
+                        offset_m + i, offset_m + j
+                    ]
+
+    return dl_array
+
+
+class SSHTInputError(TypeError):
+    """Raise this when inputs are the wrong type"""
+
+    pass
+
+
+class SSHTSpinError(ValueError):
+    """Raise this when the spin is none zero but Reality is true"""
+
+    pass
+
+
+def sample_shape(L, method="MW"):
+    shapes = {
+        "MW": (L, 2 * L - 1),
+        "MW_pole": (L - 1, 2 * L - 1),
+        "MWSS": (L - 1, 2 * L - 1),
+        "GL": (L, 2 * L - 1),
+        "DH": (2 * L, 2 * L - 1),
+    }
+    try:
+        return shapes[method]
+    except KeyError:
+        raise SSHTInputError(
+            "Method is not recognised, Methods are: MW, MW_pole, MWSS, DH and GL"
+        )
+
+
+def ssht(f, L: int, spin=0, method="MW", real=False, forward=True, adjoint=False):
+    dl_method = 0
+
+    # Checks
+    if f.ndim != 2:
+        raise SSHTInputError("f must be 2D numpy array")
+
+    _methods = ["MW", "MW_pole", "MWSS", "DH", "GL"]
+    if not adjoint and method not in _methods:
+        raise SSHTInputError("Method is not recognised, Methods are: %s" % _methods)
+    elif adjoint and method not in ["MW", "MWSS"]:
+        raise SSHTInputError("Method is not recognised, Methods are: MW, MWSS")
+
+    if spin and real:
+        raise SSHTSpinError(
+            "Reality set to True and Spin is not 0. However, spin signals must be complex."
+        )
+
+    if f.dtype == np.float_ and not real:
+        warnings.warn(
+            "Real signal given but Reality flag is False. "
+            "Set Reality = True to improve performance"
+        )
+        f_new = f + 1j * np.zeros(sample_shape(L, method=method), dtype=np.float_)
+        f = f_new
+
+    if f.dtype == np.complex_ and real:
+        warnings.warn(
+            "Complex signal given but Reality flag is True. Ignoring complex component"
+        )
+        f_new = np.real(f)
+        f = f_new.copy(order="c")
+
+    modifier = "_real" if real else ""
+    if method.startswith("MW"):
+        _method = "mw"
+        if method == "MWSS":
+            modifier = "_ss" + modifier
+        elif method == "MW_pole":
+            modifier = modifier + "_pole"
+    else:
+        _method = method.lower()
+
+    fnc = getattr(
+        _ssht_cffi.lib,
+        f"ssht_{'core' if not adjoint else 'adjoint'}_{_method}_"
+        f"{'forward' if forward else 'inverse'}_sov{'_conv' if forward else ''}"
+        f"_sym{modifier}",
+    )
+
+    _out_shapes = {
+        "forward_mw_complex": ([L * L], np.complex),
+        "inverse_mw_complex": ([L, 2 * L - 1], np.complex),
+        "inverse_mw_complex_adjoint": ([L * L], np.complex),
+        "forward_mw_complex_adjoint": ([L, 2 * L - 1], np.complex),
+        "forward_mw_real": ([L * L], np.complex),
+        "inverse_mw_real": ([L, 2 * L - 1], np.float),
+        "inverse_mw_real_adjoint": ([L * L], np.complex),
+        "forward_mw_real_adjoint": ([L, 2 * L - 1], np.float),
+        "forward_mw_complex_ss": ([L * L], np.complex),
+        "inverse_mw_complex_ss": ([L + 1, 2 * L], np.complex),
+        "inverse_mw_complex_ss_adjoint": ([L * L], np.complex),
+        "forward_mw_complex_ss_adjoint": ([L + 1, 2 * L], np.complex),
+        "forward_mw_real_ss": ([L * L], np.complex),
+        "inverse_mw_real_ss": ([L + 1, 2 * L], np.float),
+        "inverse_mw_real_ss_adjoint": ([L * L], np.complex),
+        "forward_mw_real_ss_adjoint": ([L + 1, 2 * L], np.float),
+        "forward_mw_complex_pole": ([L * L], np.complex),
+        "inverse_mw_complex_pole": ([L - 1, 2 * L - 1], np.complex),
+        "inverse_mw_complex_pole_adjoint": ([L * L], np.complex),
+        "forward_mw_complex_pole_adjoint": ([L - 1, 2 * L - 1], np.complex),
+        "forward_mw_real_pole": ([L * L], np.complex),
+        "inverse_mw_real_pole": ([L - 1, 2 * L - 1], np.float),
+        "inverse_mw_real_pole_adjoint": ([L * L], np.complex),
+        "forward_mw_real_pole_adjoint": ([L - 1, 2 * L - 1], np.float),
+        "forward_dh_complex": ([L * L], np.complex),
+        "inverse_dh_complex": ([2 * L, 2 * L - 1], np.complex),
+        "forward_dh_real": ([L * L], np.complex),
+        "inverse_dh_real": ([2 * L, 2 * L - 1], np.float),
+        "forward_gl_complex": ([L * L], np.complex),
+        "inverse_gl_complex": ([L, 2 * L - 1], np.complex),
+        "forward_gl_real": ([L * L], np.complex),
+        "inverse_gl_real": ([L, 2 * L - 1], np.float),
+    }
+
+    out_shape = _out_shapes[
+        f"forward_{_method}_{'real' if real else 'complex'}"
+        f"{modifier}{'_adjoint' if adjoint else ''}"
+    ]
+    out = np.empty(out_shape[0], dtype=out_shape[1])
+
+    args = (ffi.from_buffer(out),)
+
+    if method == "MW_pole":
+        args = args + (ffi.from_buffer(f[0]),) + tuple(f[1:]) + (L,)
+    else:
+        args = args + (ffi.from_buffer(f), L)
+
+    if real:
+        args = args + (spin,)
+
+    if method not in ["DH", "GL"]:
+        args = args + (dl_method,)
+
+    args = args + (0,)
+
+    fnc(*args)
+
+    return out
