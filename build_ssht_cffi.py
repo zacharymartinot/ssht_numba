@@ -29,11 +29,13 @@ makeopts = [
     "-std=c99",
     "-Wall",
     "-O3",
-    "-fopenmp",
     '-DSSHT_VERSION="1.2b1"',
     '-DSSHT_BUILD="`git rev-parse HEAD`"',
     "-fPIC",
 ]
+
+if "NO_OPENMP" not in os.environ:
+    makeopts += ["-fopenmp"]
 
 inc_string = ""
 for inc in ssht_inc_files:
