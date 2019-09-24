@@ -37,7 +37,7 @@ makeopts = [
     "-fPIC",
 ]
 
-if "NO_OPENMP" not in os.environ:
+if os.getenv("OPENMP", False):
     makeopts += ["-fopenmp"]
 
 inc_string = ""
