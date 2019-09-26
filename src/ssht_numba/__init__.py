@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from pkg_resources import DistributionNotFound, get_distribution
 
-from .numba_wrappers import *  # noqa
+from .ssht import *
+from .wrappers import *  # noqa
 
 try:
     # Change here if project is renamed and does not equal the package name
