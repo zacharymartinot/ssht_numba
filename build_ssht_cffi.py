@@ -20,20 +20,25 @@ if fftw_path:
 
 
 ssht_src_files = sorted(glob.glob(os.path.join("ssht", "src", "c", "*.c")))
-ssht_src_files = [fl for fl in ssht_src_files if not fl.endswith("ssht_about.c")]
+ssht_src_files = [
+    fl
+    for fl in ssht_src_files
+    if not fl.endswith("ssht_about.c") and not fl.endswith("ssht_test.c")
+]
 
 ssht_inc_files = sorted(glob.glob(os.path.join("ssht", "src", "c", "*.h")))
-ssht_inc_files = [fl for fl in ssht_inc_files if not fl.endswith("ssht_about.h")]
 
 makeopts = [
     "-std=c99",
     "-Wall",
     "-O3",
-    "-fopenmp",
     '-DSSHT_VERSION="1.2b1"',
     '-DSSHT_BUILD="`git rev-parse HEAD`"',
     "-fPIC",
 ]
+
+if os.getenv("OPENMP", False):
+    makeopts += ["-fopenmp"]
 
 inc_string = ""
 for inc in ssht_inc_files:

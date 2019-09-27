@@ -2,7 +2,6 @@
 
 The function signatures are defined in the SSHT docs.
 """
-
 import cffi
 import numba as nb
 import numpy as np
@@ -36,7 +35,7 @@ __all__ = [
     "mwss_sample_shape",
     "mw_sample_positions",
     "mwss_sample_positions",
-    "bad_meshgrid",
+    "dl_beta_risbo_half_table",
 ]
 
 # assign references outside of the njit function, apparently can't use
@@ -46,7 +45,6 @@ ssht_core_mw_forward_sov_conv_sym = _ssht_cffi.lib.ssht_core_mw_forward_sov_conv
 
 @nb.njit
 def mw_forward_sov_conv_sym(f, L, s, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -58,7 +56,6 @@ ssht_core_mw_inverse_sov_sym = _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym
 
 @nb.njit
 def mw_inverse_sov_sym(flm, L, s, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -72,7 +69,6 @@ ssht_core_mw_forward_sov_conv_sym_real = (
 
 @nb.njit
 def mw_forward_sov_conv_sym_real(f, L, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -84,7 +80,6 @@ ssht_core_mw_inverse_sov_sym_real = _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym_
 
 @nb.njit
 def mw_inverse_sov_sym_real(flm, L, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -98,7 +93,6 @@ ssht_core_mw_forward_sov_conv_sym_ss = (
 
 @nb.njit
 def mw_forward_sov_conv_sym_ss(f, L, s, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -110,7 +104,6 @@ ssht_core_mw_inverse_sov_sym_ss = _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym_ss
 
 @nb.njit
 def mw_inverse_sov_sym_ss(flm, L, s, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -124,7 +117,6 @@ ssht_core_mw_forward_sov_conv_sym_ss_real = (
 
 @nb.njit
 def mw_forward_sov_conv_sym_ss_real(f, L, flm):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -138,7 +130,6 @@ ssht_core_mw_inverse_sov_sym_ss_real = (
 
 @nb.njit
 def mw_inverse_sov_sym_ss_real(flm, L, f):
-
     ptr_flm = ffi.from_buffer(flm)
     ptr_f = ffi.from_buffer(f)
 
@@ -220,70 +211,25 @@ def mwss_sample_positions(L):
     return theta, phi
 
 
-@nb.njit
-def bad_meshgrid(x, y):
-    # output is the same as np.meshgrid(x,y)
-    N = x.size
-    M = y.size
-
-    xx = np.empty((M, N), dtype=nb.float64)
-    yy = np.empty((M, N), dtype=nb.float64)
-
-    for i in range(M):
-        xx[i, :] = x.copy()
-
-    for j in range(N):
-        yy[:, j] = y.copy()
-
-    return xx, yy
+_ssht_dl_beta_risbo_half_table = _ssht_cffi.lib.ssht_dl_beta_risbo_half_table
 
 
 @nb.njit
-def dl_m(el, s, beta, delta):
-    L = (delta.shape[2] + 1) / 2
-    mp = np.arange(-el, el + 1)
-
-    #     k = np.exp(1j*mp*beta)
-    arg = mp * beta
-    k = np.cos(arg) + 1j * np.sin(arg)
-
-    ms = -el + L - 1
-    mf = (el + 1) + (L - 1)
-    s_i = -s + L - 1
-
-    delta_1 = delta[el, ms:mf, ms:mf]
-    delta_2 = delta[el, ms:mf, s_i]
-
-    dl_m_out = np.zeros(2 * el + 1, dtype=nb.complex128)
-
-    for i_m in range(len(mp)):
-        dl_m_out[i_m] = 1j ** (-s - mp[i_m]) * np.sum(
-            k * delta_1[:, i_m] * delta_2, axis=0
-        )
-
-    return dl_m_out
-
-
-@nb.njit(parallel=True)
-def ssht_numba_series_eval(f_lm, s, L, delta, theta, phi):
-    f = np.zeros(len(theta), dtype=nb.complex128)
-
-    spin_sign = (-1.0) ** s
-    for i in nb.prange(len(theta)):
-        for el in range(L):
-            m_axis = np.arange(-el, el + 1)
-
-            phases = m_axis * phi[i]
-            sY_elm = (
-                spin_sign
-                * np.sqrt((2.0 * el + 1.0) / 4.0 / np.pi)
-                * (np.cos(phases) + 1j * np.sin(phases))
-            )
-            sY_elm *= dl_m(el, s, theta[i], delta)
-
-            j0 = el * (el + 1) - el
-            j1 = el * (el + 1) + el
-
-            f[i] += np.sum(sY_elm * f_lm[j0 : j1 + 1])
-
-    return f
+def dl_beta_risbo_half_table(
+    dl_array: np.ndarray,
+    beta: float,
+    L: int,
+    el: int,
+    sqrt_tbl: np.ndarray,
+    signs: np.ndarray,
+):
+    dl_size = 2
+    _ssht_dl_beta_risbo_half_table(
+        ffi.from_buffer(dl_array),
+        beta,
+        L,
+        dl_size,
+        el,
+        ffi.from_buffer(sqrt_tbl),
+        ffi.from_buffer(signs),
+    )
