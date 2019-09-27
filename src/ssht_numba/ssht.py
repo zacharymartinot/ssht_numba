@@ -2,7 +2,6 @@ import cffi
 import numba as nb
 import numpy as np
 
-from . import _ssht_cffi
 from .wrappers import dl_beta_risbo_half_table
 
 ffi = cffi.FFI()
