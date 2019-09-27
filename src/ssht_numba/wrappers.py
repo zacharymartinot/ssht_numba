@@ -35,6 +35,7 @@ __all__ = [
     "mwss_sample_shape",
     "mw_sample_positions",
     "mwss_sample_positions",
+    "dl_beta_risbo_half_table",
 ]
 
 # assign references outside of the njit function, apparently can't use
@@ -208,3 +209,27 @@ def mwss_sample_positions(L):
         phi[p] = ssht_sampling_mw_ss_p2phi(p, L)
 
     return theta, phi
+
+
+_ssht_dl_beta_risbo_half_table = _ssht_cffi.lib.ssht_dl_beta_risbo_half_table
+
+
+@nb.njit
+def dl_beta_risbo_half_table(
+    dl_array: np.ndarray,
+    beta: float,
+    L: int,
+    el: int,
+    sqrt_tbl: np.ndarray,
+    signs: np.ndarray,
+):
+    dl_size = 2
+    _ssht_dl_beta_risbo_half_table(
+        ffi.from_buffer(dl_array),
+        beta,
+        L,
+        dl_size,
+        el,
+        ffi.from_buffer(sqrt_tbl),
+        ffi.from_buffer(signs),
+    )

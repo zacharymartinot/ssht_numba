@@ -3,6 +3,7 @@ import numba as nb
 import numpy as np
 
 from . import _ssht_cffi
+from .wrappers import dl_beta_risbo_half_table
 
 ffi = cffi.FFI()
 
@@ -78,9 +79,6 @@ def ssht_numba_series_eval(f_lm, s, L, delta, theta, phi):
     return f
 
 
-ssht_dl_beta_risbo_half_table = _ssht_cffi.lib.ssht_dl_beta_risbo_half_table
-
-
 @nb.njit
 def generate_dl(beta: float, L: int):
     dl_array = np.zeros((L, 2 * L - 1, 2 * L - 1))
@@ -88,42 +86,21 @@ def generate_dl(beta: float, L: int):
 
     sqrt_tbl = np.sqrt(np.arange(0, 2 * (L - 1) + 1))
     signs = np.ones((L + 1, 1))
+    signs[1 : L + 1 : 2] = -1
 
     offset_m = L - 1
 
-    for i in range(1, L + 1, 2):
-        signs[i] = -1
+    # do recursion
+    # el = 0 first
+    dl_beta_risbo_half_table(dl_dummy, beta, L, 0, sqrt_tbl, signs)
+    dl_array[0, offset_m, offset_m] = dl_dummy[offset_m, offset_m]
 
-        dl_size = 2
-
-        # do recursion
-        # el = 0 first
-        ssht_dl_beta_risbo_half_table(
-            ffi.from_buffer(dl_dummy),
-            beta,
-            L,
-            dl_size,
-            0,
-            ffi.from_buffer(sqrt_tbl),
-            ffi.from_buffer(signs),
-        )
-
-        dl_array[0, offset_m, offset_m] = dl_dummy[offset_m, offset_m]
-
-        for el in range(1, L):
-            ssht_dl_beta_risbo_half_table(
-                ffi.from_buffer(dl_dummy),
-                beta,
-                L,
-                dl_size,
-                el,
-                ffi.from_buffer(sqrt_tbl),
-                ffi.from_buffer(signs),
-            )
-            for i in range(-el, el + 1):
-                for j in range(-el, el + 1):
-                    dl_array[el, offset_m + i, offset_m + j] = dl_dummy[
-                        offset_m + i, offset_m + j
-                    ]
+    for el in range(1, L):
+        dl_beta_risbo_half_table(dl_dummy, beta, L, el, sqrt_tbl, signs)
+        for i in range(-el, el + 1):
+            for j in range(-el, el + 1):
+                dl_array[el, offset_m + i, offset_m + j] = dl_dummy[
+                    offset_m + i, offset_m + j
+                ]
 
     return dl_array
