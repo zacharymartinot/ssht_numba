@@ -29,7 +29,7 @@ def bad_meshgrid(x, y):
 
 @nb.njit
 def dl_m(el, s, beta, delta):
-    L = (delta.shape[2] + 1) / 2
+    L = (delta.shape[2] + 1) // 2
     mp = np.arange(-el, el + 1)
 
     #     k = np.exp(1j*mp*beta)

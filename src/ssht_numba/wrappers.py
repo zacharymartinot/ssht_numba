@@ -148,7 +148,7 @@ def isqrt(n):
     while square <= n:
         square += delta
         delta += 2
-    return delta / 2 - 1
+    return delta // 2 - 1
 
 
 @nb.njit
