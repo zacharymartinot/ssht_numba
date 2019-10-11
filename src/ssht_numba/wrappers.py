@@ -114,7 +114,6 @@ ssht_core_mw_forward_sov_conv_sym_ss_real = (
     _ssht_cffi.lib.ssht_core_mw_forward_sov_conv_sym_ss_real
 )
 
-
 @nb.njit
 def mw_forward_sov_conv_sym_ss_real(f, L, flm):
     ptr_flm = ffi.from_buffer(flm)
@@ -126,7 +125,6 @@ def mw_forward_sov_conv_sym_ss_real(f, L, flm):
 ssht_core_mw_inverse_sov_sym_ss_real = (
     _ssht_cffi.lib.ssht_core_mw_inverse_sov_sym_ss_real
 )
-
 
 @nb.njit
 def mw_inverse_sov_sym_ss_real(flm, L, f):
@@ -190,7 +188,6 @@ def mw_sample_positions(L):
         phi[p] = ssht_sampling_mw_p2phi(p, L)
 
     return theta, phi
-
 
 ssht_sampling_mw_ss_t2theta = _ssht_cffi.lib.ssht_sampling_mw_ss_t2theta
 ssht_sampling_mw_ss_p2phi = _ssht_cffi.lib.ssht_sampling_mw_ss_p2phi
