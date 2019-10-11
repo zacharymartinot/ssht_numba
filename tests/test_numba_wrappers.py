@@ -40,6 +40,16 @@ def test_everything():
     assert np.allclose(py_theta, nb_theta)
     assert np.allclose(py_phi, nb_phi)
 
+    py_ttheta, py_pphi = pyssht.sample_positions(L, Method="MW", Grid=True)
+    nb_ttheta, nb_pphi = sshtn.mw_sample_grid(L)
+    assert np.allclose(py_ttheta, nb_ttheta)
+    assert np.allclose(py_pphi, nb_pphi)
+
+    py_ttheta, py_pphi = pyssht.sample_positions(L, Method="MWSS", Grid=True)
+    nb_ttheta, nb_pphi = sshtn.mwss_sample_grid(L)
+    assert np.allclose(py_ttheta, nb_ttheta)
+    assert np.allclose(py_pphi, nb_pphi)
+
     # Generate random flms (of complex signal).
     np.random.seed(89834)
     flm = np.random.randn(L * L) + 1j * np.random.randn(L * L)

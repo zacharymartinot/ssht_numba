@@ -2,11 +2,17 @@ import cffi
 import numba as nb
 import numpy as np
 
-from .wrappers import dl_beta_risbo_half_table
+from .wrappers import *
 
 ffi = cffi.FFI()
 
-__all__ = ["bad_meshgrid", "ssht_numba_series_eval", "generate_dl"]
+__all__ = [
+    "bad_meshgrid",
+    "ssht_numba_series_eval",
+    "generate_dl",
+    "mw_sample_grid",
+    "mwss_sample_grid",
+]
 
 
 @nb.njit
@@ -26,10 +32,23 @@ def bad_meshgrid(x, y):
 
     return xx, yy
 
+@nb.njit
+def mw_sample_grid(L):
+    theta, phi = mw_sample_positions(L)
+    pphi, ttheta = bad_meshgrid(phi, theta)
+
+    return ttheta, pphi
+
+@nb.njit
+def mwss_sample_grid(L):
+    theta, phi = mwss_sample_positions(L)
+    pphi, ttheta = bad_meshgrid(phi, theta)
+
+    return ttheta, pphi
 
 @nb.njit
 def dl_m(el, s, beta, delta):
-    L = (delta.shape[2] + 1) / 2
+    L = (delta.shape[2] + 1) // 2
     mp = np.arange(-el, el + 1)
 
     #     k = np.exp(1j*mp*beta)
