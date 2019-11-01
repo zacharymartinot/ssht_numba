@@ -8,6 +8,7 @@ ffi = cffi.FFI()
 
 __all__ = [
     "bad_meshgrid",
+    "dl_m",
     "ssht_numba_series_eval",
     "generate_dl",
     "mw_sample_grid",
