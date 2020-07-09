@@ -5,7 +5,7 @@ The function signatures are defined in the SSHT docs.
 import cffi
 import numba as nb
 import numpy as np
-from numba import cffi_support
+import numba.core.typing.cffi_utils as cffi_support
 
 from . import _ssht_cffi
 
