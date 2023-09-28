@@ -5,18 +5,18 @@ The function signatures are defined in the SSHT docs.
 import cffi
 import numba as nb
 import numpy as np
-from numba import cffi_support
+from numba.core.typing import cffi_utils
 
 from . import _ssht_cffi
 
 ffi = cffi.FFI()
 
 # allows numba to use functions from this module in nopython mode
-cffi_support.register_module(_ssht_cffi)
+cffi_utils.register_module(_ssht_cffi)
 
 # tells numba how to map numba types to the types defined in the cffi function signatures
-cffi_support.register_type(ffi.typeof("double _Complex"), nb.types.complex128)
-cffi_support.register_type(
+cffi_utils.register_type(ffi.typeof("double _Complex"), nb.types.complex128)
+cffi_utils.register_type(
     ffi.typeof("double _Complex *"), nb.types.CPointer(nb.types.complex128)
 )
 
